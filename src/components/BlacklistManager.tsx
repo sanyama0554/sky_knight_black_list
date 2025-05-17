@@ -20,8 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { useBlacklist } from "@/hooks/useBlacklist";
-import { Loader2, Trash2 } from "lucide-react";
+import { useBlacklist, type SortField } from "@/hooks/useBlacklist";
+import { ArrowUpDown, Loader2, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -30,8 +30,13 @@ export const BlacklistManager = () => {
     entries,
     loading,
     error: fetchError,
+    searchQuery,
+    sortField,
+    sortOrder,
     addEntry,
     deleteEntry,
+    updateSearch,
+    updateSort,
   } = useBlacklist();
   const [playerId, setPlayerId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -79,6 +84,10 @@ export const BlacklistManager = () => {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleSort = (field: SortField) => {
+    updateSort(field);
   };
 
   return (
@@ -149,6 +158,17 @@ export const BlacklistManager = () => {
           <CardDescription>登録済みのブラックリスト</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="プレイヤーID、プレイヤー名、理由で検索..."
+                value={searchQuery}
+                onChange={(e) => updateSearch(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
           {fetchError && (
             <Alert variant="destructive" className="mb-4">
               <AlertDescription>{fetchError}</AlertDescription>
@@ -160,7 +180,9 @@ export const BlacklistManager = () => {
             </div>
           ) : entries.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              ブラックリストに登録されているプレイヤーはいません。
+              {searchQuery
+                ? "検索条件に一致するプレイヤーが見つかりません。"
+                : "ブラックリストに登録されているプレイヤーはいません。"}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -168,9 +190,27 @@ export const BlacklistManager = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>プレイヤーID</TableHead>
-                    <TableHead>プレイヤー名</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("player_name")}
+                        className="flex items-center gap-1"
+                      >
+                        プレイヤー名
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </TableHead>
                     <TableHead>理由</TableHead>
-                    <TableHead>登録日時</TableHead>
+                    <TableHead>
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort("created_at")}
+                        className="flex items-center gap-1"
+                      >
+                        登録日時
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </TableHead>
                     <TableHead className="w-[100px]">操作</TableHead>
                   </TableRow>
                 </TableHeader>

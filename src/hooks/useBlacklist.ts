@@ -13,11 +13,17 @@ export interface BlacklistEntry {
   created_at: string;
 }
 
+export type SortField = "created_at" | "player_name";
+export type SortOrder = "asc" | "desc";
+
 export const useBlacklist = () => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<BlacklistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // ブラックリストの取得
   const fetchEntries = async () => {
@@ -25,11 +31,19 @@ export const useBlacklist = () => {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("blacklist")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      let query = supabase.from("blacklist").select("*").eq("user_id", user.id);
+
+      // 検索条件の適用
+      if (searchQuery) {
+        query = query.or(
+          `player_id.ilike.%${searchQuery}%,player_name.ilike.%${searchQuery}%,reason.ilike.%${searchQuery}%`
+        );
+      }
+
+      // 並び替えの適用
+      query = query.order(sortField, { ascending: sortOrder === "asc" });
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setEntries(data || []);
@@ -42,6 +56,23 @@ export const useBlacklist = () => {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 検索条件の更新
+  const updateSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  // 並び替えの更新
+  const updateSort = (field: SortField) => {
+    if (field === sortField) {
+      // 同じフィールドの場合は順序を切り替え
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // 新しいフィールドの場合は降順で設定
+      setSortField(field);
+      setSortOrder("desc");
     }
   };
 
@@ -88,7 +119,7 @@ export const useBlacklist = () => {
     }
   };
 
-  // 初期データの取得
+  // 初期データの取得と検索・並び替え条件の変更時の再取得
   useEffect(() => {
     if (user) {
       fetchEntries();
@@ -96,14 +127,19 @@ export const useBlacklist = () => {
       setEntries([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, searchQuery, sortField, sortOrder]);
 
   return {
     entries,
     loading,
     error,
+    searchQuery,
+    sortField,
+    sortOrder,
     addEntry,
     deleteEntry,
+    updateSearch,
+    updateSort,
     refreshEntries: fetchEntries,
   };
 };
