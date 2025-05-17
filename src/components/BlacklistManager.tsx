@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useBlacklist } from "@/hooks/useBlacklist";
 import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const BlacklistManager = () => {
   const {
@@ -36,28 +37,27 @@ export const BlacklistManager = () => {
   const [playerName, setPlayerName] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setMessage(null);
     setIsSubmitting(true);
 
     try {
       await addEntry(playerId, playerName, reason);
-      setMessage("ブラックリストに追加しました");
+      toast.success("ブラックリストに追加しました");
       setPlayerId("");
       setPlayerName("");
       setReason("");
     } catch (err) {
-      setError(
+      const errorMessage =
         err instanceof Error
           ? err.message
-          : "ブラックリストの追加に失敗しました"
-      );
+          : "ブラックリストの追加に失敗しました";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -69,13 +69,13 @@ export const BlacklistManager = () => {
     setDeletingId(id);
     try {
       await deleteEntry(id);
-      setMessage("ブラックリストから削除しました");
+      toast.success("ブラックリストから削除しました");
     } catch (err) {
-      setError(
+      const errorMessage =
         err instanceof Error
           ? err.message
-          : "ブラックリストの削除に失敗しました"
-      );
+          : "ブラックリストの削除に失敗しました";
+      toast.error(errorMessage);
     } finally {
       setDeletingId(null);
     }
@@ -127,11 +127,6 @@ export const BlacklistManager = () => {
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            {message && (
-              <Alert>
-                <AlertDescription>{message}</AlertDescription>
               </Alert>
             )}
             <Button type="submit" disabled={isSubmitting}>
