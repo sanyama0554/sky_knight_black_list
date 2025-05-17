@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Table,
   TableBody,
@@ -33,10 +34,14 @@ export const BlacklistManager = () => {
     searchQuery,
     sortField,
     sortOrder,
+    currentPage,
+    totalPages,
+    totalCount,
     addEntry,
     deleteEntry,
     updateSearch,
     updateSort,
+    updatePage,
   } = useBlacklist();
   const [playerId, setPlayerId] = useState("");
   const [playerName, setPlayerName] = useState("");
@@ -155,7 +160,9 @@ export const BlacklistManager = () => {
       <Card>
         <CardHeader>
           <CardTitle>ブラックリスト一覧</CardTitle>
-          <CardDescription>登録済みのブラックリスト</CardDescription>
+          <CardDescription>
+            登録済みのブラックリスト（全{totalCount}件）
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -185,67 +192,78 @@ export const BlacklistManager = () => {
                 : "ブラックリストに登録されているプレイヤーはいません。"}
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>プレイヤーID</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort("player_name")}
-                        className="flex items-center gap-1"
-                      >
-                        プレイヤー名
-                        <ArrowUpDown className="h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>理由</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort("created_at")}
-                        className="flex items-center gap-1"
-                      >
-                        登録日時
-                        <ArrowUpDown className="h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="w-[100px]">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {entries.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell className="font-mono">
-                        {entry.player_id}
-                      </TableCell>
-                      <TableCell>{entry.player_name}</TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {entry.reason}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {new Date(entry.created_at).toLocaleString()}
-                      </TableCell>
-                      <TableCell>
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>プレイヤーID</TableHead>
+                      <TableHead>
                         <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(entry.id)}
-                          disabled={deletingId === entry.id}
+                          variant="ghost"
+                          onClick={() => handleSort("player_name")}
+                          className="flex items-center gap-1"
                         >
-                          {deletingId === entry.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
+                          プレイヤー名
+                          <ArrowUpDown className="h-4 w-4" />
                         </Button>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead>理由</TableHead>
+                      <TableHead>
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort("created_at")}
+                          className="flex items-center gap-1"
+                        >
+                          登録日時
+                          <ArrowUpDown className="h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[100px]">操作</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {entries.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="font-mono">
+                          {entry.player_id}
+                        </TableCell>
+                        <TableCell>{entry.player_name}</TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {entry.reason}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {new Date(entry.created_at).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(entry.id)}
+                            disabled={deletingId === entry.id}
+                          >
+                            {deletingId === entry.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-4">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={updatePage}
+                  />
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

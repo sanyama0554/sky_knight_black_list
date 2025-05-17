@@ -16,6 +16,8 @@ export interface BlacklistEntry {
 export type SortField = "created_at" | "player_name";
 export type SortOrder = "asc" | "desc";
 
+const ITEMS_PER_PAGE = 10;
+
 export const useBlacklist = () => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<BlacklistEntry[]>([]);
@@ -24,6 +26,8 @@ export const useBlacklist = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   // ブラックリストの取得
   const fetchEntries = async () => {
@@ -31,7 +35,10 @@ export const useBlacklist = () => {
 
     try {
       setLoading(true);
-      let query = supabase.from("blacklist").select("*").eq("user_id", user.id);
+      let query = supabase
+        .from("blacklist")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id);
 
       // 検索条件の適用
       if (searchQuery) {
@@ -43,10 +50,16 @@ export const useBlacklist = () => {
       // 並び替えの適用
       query = query.order(sortField, { ascending: sortOrder === "asc" });
 
-      const { data, error } = await query;
+      // ページネーションの適用
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
       setEntries(data || []);
+      setTotalCount(count || 0);
     } catch (err) {
       console.error("Error fetching blacklist:", err);
       setError(
@@ -62,6 +75,7 @@ export const useBlacklist = () => {
   // 検索条件の更新
   const updateSearch = (query: string) => {
     setSearchQuery(query);
+    setCurrentPage(1); // 検索時は1ページ目に戻す
   };
 
   // 並び替えの更新
@@ -74,6 +88,11 @@ export const useBlacklist = () => {
       setSortField(field);
       setSortOrder("desc");
     }
+  };
+
+  // ページの更新
+  const updatePage = (page: number) => {
+    setCurrentPage(page);
   };
 
   // ブラックリストの追加
@@ -127,7 +146,9 @@ export const useBlacklist = () => {
       setEntries([]);
       setLoading(false);
     }
-  }, [user, searchQuery, sortField, sortOrder]);
+  }, [user, searchQuery, sortField, sortOrder, currentPage]);
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return {
     entries,
@@ -136,10 +157,14 @@ export const useBlacklist = () => {
     searchQuery,
     sortField,
     sortOrder,
+    currentPage,
+    totalPages,
+    totalCount,
     addEntry,
     deleteEntry,
     updateSearch,
     updateSort,
+    updatePage,
     refreshEntries: fetchEntries,
   };
 };
