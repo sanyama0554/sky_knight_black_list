@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useBlacklist } from "@/hooks/useBlacklist";
+import { Loader2, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 export const BlacklistManager = () => {
@@ -37,6 +38,7 @@ export const BlacklistManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +66,7 @@ export const BlacklistManager = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("このエントリーを削除してもよろしいですか？")) return;
 
+    setDeletingId(id);
     try {
       await deleteEntry(id);
       setMessage("ブラックリストから削除しました");
@@ -73,6 +76,8 @@ export const BlacklistManager = () => {
           ? err.message
           : "ブラックリストの削除に失敗しました"
       );
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -87,7 +92,7 @@ export const BlacklistManager = () => {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="playerId">プレイヤーID</Label>
                 <Input
@@ -95,6 +100,7 @@ export const BlacklistManager = () => {
                   value={playerId}
                   onChange={(e) => setPlayerId(e.target.value)}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-2">
@@ -104,6 +110,7 @@ export const BlacklistManager = () => {
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -114,6 +121,7 @@ export const BlacklistManager = () => {
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="ブラックリストに登録する理由を入力してください（任意）"
+                disabled={isSubmitting}
               />
             </div>
             {error && (
@@ -127,7 +135,14 @@ export const BlacklistManager = () => {
               </Alert>
             )}
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "追加中..." : "追加"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  追加中...
+                </>
+              ) : (
+                "追加"
+              )}
             </Button>
           </CardContent>
         </form>
@@ -145,42 +160,57 @@ export const BlacklistManager = () => {
             </Alert>
           )}
           {loading ? (
-            <p>読み込み中...</p>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
           ) : entries.length === 0 ? (
-            <p>ブラックリストに登録されているプレイヤーはいません。</p>
+            <p className="text-center text-muted-foreground py-8">
+              ブラックリストに登録されているプレイヤーはいません。
+            </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>プレイヤーID</TableHead>
-                  <TableHead>プレイヤー名</TableHead>
-                  <TableHead>理由</TableHead>
-                  <TableHead>登録日時</TableHead>
-                  <TableHead>操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {entries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>{entry.player_id}</TableCell>
-                    <TableCell>{entry.player_name}</TableCell>
-                    <TableCell>{entry.reason}</TableCell>
-                    <TableCell>
-                      {new Date(entry.created_at).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(entry.id)}
-                      >
-                        削除
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>プレイヤーID</TableHead>
+                    <TableHead>プレイヤー名</TableHead>
+                    <TableHead>理由</TableHead>
+                    <TableHead>登録日時</TableHead>
+                    <TableHead className="w-[100px]">操作</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {entries.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell className="font-mono">
+                        {entry.player_id}
+                      </TableCell>
+                      <TableCell>{entry.player_name}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {entry.reason}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        {new Date(entry.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(entry.id)}
+                          disabled={deletingId === entry.id}
+                        >
+                          {deletingId === entry.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
