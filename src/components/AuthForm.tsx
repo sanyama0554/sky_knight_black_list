@@ -1,3 +1,6 @@
+"use client";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,17 +20,22 @@ export const AuthForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setMessage(null);
 
     try {
       if (isLogin) {
         await signIn(email, password);
       } else {
         await signUp(email, password);
+        setMessage(
+          "確認メールを送信しました。メールに記載されたリンクをクリックして、登録を完了してください。"
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "認証に失敗しました");
@@ -67,7 +75,16 @@ export const AuthForm = () => {
                 required
               />
             </div>
-            {error && <div className="text-sm text-red-500">{error}</div>}
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {message && (
+              <Alert>
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
