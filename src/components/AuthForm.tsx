@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export const AuthForm = () => {
@@ -23,6 +24,7 @@ export const AuthForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +33,26 @@ export const AuthForm = () => {
 
     try {
       if (isLogin) {
-        await signIn(email, password);
+        try {
+          const { user } = await signIn(email, password);
+          if (user) {
+            router.push("/dashboard");
+          }
+        } catch (err) {
+          if (
+            err instanceof Error &&
+            err.message.includes("Email not confirmed")
+          ) {
+            setError(
+              "メールアドレスの確認が完了していません。確認メールを再送信しますか？"
+            );
+            setMessage(
+              "確認メールを再送信するには、新規登録から再度メールアドレスを入力してください。"
+            );
+          } else {
+            throw err;
+          }
+        }
       } else {
         await signUp(email, password);
         setMessage(

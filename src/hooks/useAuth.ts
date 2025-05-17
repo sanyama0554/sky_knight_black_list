@@ -13,11 +13,16 @@ export const useAuth = () => {
   useEffect(() => {
     // 現在のセッションを取得
     const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error("Error getting session:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getSession();
@@ -25,15 +30,22 @@ export const useAuth = () => {
     // 認証状態の変更を監視
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.email);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      if (event === "SIGNED_IN") {
+        router.push("/dashboard");
+      } else if (event === "SIGNED_OUT") {
+        router.push("/");
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   const signUp = async (email: string, password: string) => {
     try {
@@ -53,11 +65,15 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) throw error;
+
+      // セッション情報を更新
+      setUser(data.user);
+      return data;
     } catch (error) {
       console.error("Error signing in:", error);
       throw error;
@@ -68,7 +84,7 @@ export const useAuth = () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      router.push("/");
+      setUser(null);
     } catch (error) {
       console.error("Error signing out:", error);
       throw error;
