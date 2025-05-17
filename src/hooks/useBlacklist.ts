@@ -58,7 +58,7 @@ export const useBlacklist = () => {
         user_id: user.id,
         player_id: playerId,
         player_name: playerName,
-        reason,
+        reason: reason || "理由なし",
       });
 
       if (error) throw error;

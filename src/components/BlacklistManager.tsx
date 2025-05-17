@@ -108,12 +108,12 @@ export const BlacklistManager = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reason">理由</Label>
+              <Label htmlFor="reason">理由（任意）</Label>
               <Textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                required
+                placeholder="ブラックリストに登録する理由を入力してください（任意）"
               />
             </div>
             {error && (
