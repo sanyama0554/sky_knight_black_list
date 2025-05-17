@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
 import { useState } from "react";
 
 export const AuthForm = () => {
@@ -91,14 +92,41 @@ export const AuthForm = () => {
           <Button type="submit" className="w-full">
             {isLogin ? "ログイン" : "新規登録"}
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin ? "新規登録はこちら" : "ログインはこちら"}
-          </Button>
+          <div className="text-sm text-center">
+            {isLogin ? (
+              <>
+                アカウントをお持ちでない方は
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(false)}
+                  className="text-blue-500 hover:underline ml-1"
+                >
+                  新規登録
+                </button>
+              </>
+            ) : (
+              <>
+                すでにアカウントをお持ちの方は
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(true)}
+                  className="text-blue-500 hover:underline ml-1"
+                >
+                  ログイン
+                </button>
+              </>
+            )}
+          </div>
+          {isLogin && (
+            <div className="text-sm text-center">
+              <Link
+                href="/reset-password"
+                className="text-blue-500 hover:underline"
+              >
+                パスワードをお忘れですか？
+              </Link>
+            </div>
+          )}
         </CardFooter>
       </form>
     </Card>
