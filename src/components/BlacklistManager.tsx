@@ -9,6 +9,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pagination } from "@/components/ui/pagination";
@@ -22,7 +29,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useBlacklist, type SortField } from "@/hooks/useBlacklist";
-import { ArrowUpDown, Loader2, Search, Trash2 } from "lucide-react";
+import { ArrowUpDown, Eye, Loader2, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -49,6 +56,9 @@ export const BlacklistManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<BlacklistEntry | null>(
+    null
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,18 +246,60 @@ export const BlacklistManager = () => {
                           {new Date(entry.created_at).toLocaleString()}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(entry.id)}
-                            disabled={deletingId === entry.id}
-                          >
-                            {deletingId === entry.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setSelectedEntry(entry)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>ブラックリスト詳細</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label>プレイヤーID</Label>
+                                    <p className="mt-1">{entry.player_id}</p>
+                                  </div>
+                                  <div>
+                                    <Label>プレイヤー名</Label>
+                                    <p className="mt-1">{entry.player_name}</p>
+                                  </div>
+                                  <div>
+                                    <Label>理由</Label>
+                                    <p className="mt-1 whitespace-pre-wrap">
+                                      {entry.reason || "-"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <Label>登録日時</Label>
+                                    <p className="mt-1">
+                                      {new Date(
+                                        entry.created_at
+                                      ).toLocaleString()}
+                                    </p>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(entry.id)}
+                              disabled={deletingId === entry.id}
+                            >
+                              {deletingId === entry.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
