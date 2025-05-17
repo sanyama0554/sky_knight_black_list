@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { BlacklistManager } from "./BlacklistManager";
 
 export const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -43,7 +44,7 @@ export const Dashboard = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
         <Card>
           <CardHeader>
             <CardTitle>プロフィール</CardTitle>
@@ -58,18 +59,6 @@ export const Dashboard = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>ブラックリスト</CardTitle>
-            <CardDescription>ブラックリストの管理</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-500">
-              ブラックリストの管理機能は準備中です。
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>設定</CardTitle>
             <CardDescription>アプリケーションの設定</CardDescription>
           </CardHeader>
@@ -78,6 +67,8 @@ export const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      <BlacklistManager />
     </div>
   );
 };
