@@ -33,13 +33,27 @@ export const useAuth = () => {
     };
   }, []);
 
-  const signIn = async (provider: "github") => {
+  const signUp = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error signing up:", error);
+      throw error;
+    }
+  };
+
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
       if (error) throw error;
     } catch (error) {
@@ -62,6 +76,7 @@ export const useAuth = () => {
   return {
     user,
     loading,
+    signUp,
     signIn,
     signOut,
   };
