@@ -29,7 +29,14 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useBlacklist, type SortField } from "@/hooks/useBlacklist";
-import { ArrowUpDown, Eye, Loader2, Search, Trash2 } from "lucide-react";
+import {
+  ArrowUpDown,
+  ExternalLink,
+  Eye,
+  Loader2,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -283,6 +290,21 @@ export const BlacklistManager = () => {
                                         entry.created_at
                                       ).toLocaleString()}
                                     </p>
+                                  </div>
+                                  <div className="pt-2">
+                                    <Button
+                                      variant="outline"
+                                      className="w-full"
+                                      onClick={() => {
+                                        window.open(
+                                          `https://game.granbluefantasy.jp/#profile/${entry.player_id}`,
+                                          "_blank"
+                                        );
+                                      }}
+                                    >
+                                      <ExternalLink className="mr-2 h-4 w-4" />
+                                      マイページを開く
+                                    </Button>
                                   </div>
                                 </div>
                               </DialogContent>
