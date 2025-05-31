@@ -1,0 +1,27 @@
+{
+    "manifest_version": 3,
+    "name": "Sky Knight Block List",
+    "version": "1.0",
+    "description": "グランブルーファンタジーのブラックリスト管理ツール",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "scripting"
+    ],
+    "host_permissions": [
+      "https://game.granbluefantasy.jp/*"
+    ],
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "background.js",
+      "type": "module"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://game.granbluefantasy.jp/*"],
+        "js": ["content.js"]
+      }
+    ]
+}
