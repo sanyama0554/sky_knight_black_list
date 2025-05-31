@@ -85,12 +85,6 @@ function handlePlayerClick(event) {
       const playerName = getPlayerNameFromElement(currentElement);
       console.log('プレイヤー情報を送信:', { userId, playerName });
       
-      // プレイヤー情報をコピー
-      const playerInfo = {
-        userId: userId,
-        playerName: playerName || ''
-      };
-
       // クリップボードにコピー
       navigator.clipboard.writeText(userId).then(() => {
         // コピー完了を通知
@@ -114,11 +108,15 @@ function handlePlayerClick(event) {
         setTimeout(() => {
           notification.remove();
           // 通知が消えた後にポップアップを開く
-          chrome.runtime.sendMessage({
-            type: 'PLAYER_SELECTED',
-            userId: userId,
-            playerName: playerName
-          });
+          try {
+            chrome.runtime.sendMessage({
+              type: 'PLAYER_SELECTED',
+              userId: userId,
+              playerName: playerName
+            });
+          } catch (error) {
+            console.log('拡張機能のコンテキストが無効です。ページをリロードしてください。');
+          }
         }, 2000);
       }).catch(err => {
         console.error('コピーに失敗しました:', err);
@@ -235,6 +233,12 @@ async function checkPlayersOnPage() {
     console.log('ページ上のプレイヤーIDをチェック:', Array.from(playerIds));
     
     try {
+      // 拡張機能のコンテキストが有効かチェック
+      if (!chrome.runtime?.id) {
+        console.log('拡張機能のコンテキストが無効です。');
+        return;
+      }
+      
       const response = await chrome.runtime.sendMessage({
         type: 'CHECK_BLACKLIST',
         playerIds: Array.from(playerIds)
@@ -244,7 +248,11 @@ async function checkPlayersOnPage() {
         markBlacklistedPlayers(response.blacklisted);
       }
     } catch (error) {
-      console.error('ブラックリストチェックエラー:', error);
+      if (error.message?.includes('Extension context invalidated')) {
+        console.log('拡張機能が更新されました。ページをリロードしてください。');
+      } else {
+        console.error('ブラックリストチェックエラー:', error);
+      }
     }
   }
 }
@@ -325,10 +333,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const userId = getUserIdFromElement(element);
     if (userId) {
       console.log('既存のプレイヤーIDを送信:', userId);
-      chrome.runtime.sendMessage({
-        type: 'USER_ID_FOUND',
-        userId: userId
-      });
+      try {
+        chrome.runtime.sendMessage({
+          type: 'USER_ID_FOUND',
+          userId: userId
+        });
+      } catch (error) {
+        console.log('拡張機能のコンテキストが無効です。');
+      }
     }
   });
 });
