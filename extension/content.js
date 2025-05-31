@@ -262,20 +262,62 @@ const observer = new MutationObserver((mutations) => {
   }
 });
 
+// 対象ページかどうかをチェックする関数
+function isTargetPage() {
+  // URLのハッシュ部分を取得
+  const hash = window.location.hash;
+  // #lobby/room/member/数字 のパターンにマッチするかチェック
+  const pattern = /^#lobby\/room\/member\/\d+$/;
+  return pattern.test(hash);
+}
+
+// URLの変更を監視する関数
+function watchUrlChanges() {
+  let lastUrl = window.location.href;
+  
+  const urlObserver = new MutationObserver(() => {
+    const currentUrl = window.location.href;
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      console.log('URL変更を検知:', currentUrl);
+      
+      if (isTargetPage()) {
+        console.log('ロビーメンバーページを検知、ブラックリストチェックを開始');
+        // 少し遅延させてからチェック（ページ遷移後のレンダリング待ち）
+        setTimeout(checkPlayersOnPage, 1000);
+      }
+    }
+  });
+  
+  // body要素の変更を監視（グラブルはSPAなのでURLが変わってもDOMContentLoadedは発火しない）
+  urlObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
 // ページ読み込み完了時の処理
 document.addEventListener('DOMContentLoaded', () => {
   console.log('ページ読み込み完了');
   
-  // 初回チェック
-  checkPlayersOnPage();
+  // URL変更の監視を開始
+  watchUrlChanges();
   
-  // DOM変更の監視を開始
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+  // 対象ページの場合のみ処理を実行
+  if (isTargetPage()) {
+    console.log('ロビーメンバーページです、ブラックリストチェックを開始');
+    
+    // 初回チェック
+    checkPlayersOnPage();
+    
+    // DOM変更の監視を開始
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
   
-  // 既存のプレイヤーリストからユーザーIDを取得
+  // 既存のプレイヤーリストからユーザーIDを取得（これは全ページで動作）
   const playerElements = document.querySelectorAll('[data-user-id], [data-id], [data-player-id], [data-user]');
   console.log('見つかったプレイヤー要素:', playerElements);
   
@@ -293,5 +335,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ページが完全に読み込まれた後にも実行
 window.addEventListener('load', () => {
-  setTimeout(checkPlayersOnPage, 1000);
+  if (isTargetPage()) {
+    setTimeout(checkPlayersOnPage, 1000);
+  }
+});
+
+// hashchangeイベントも監視（念のため）
+window.addEventListener('hashchange', () => {
+  console.log('ハッシュ変更を検知:', window.location.hash);
+  if (isTargetPage()) {
+    console.log('ロビーメンバーページに遷移しました');
+    setTimeout(checkPlayersOnPage, 1000);
+  }
 }); 
